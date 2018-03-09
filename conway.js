@@ -1,4 +1,4 @@
-GRID_WIDTH = 256;
+GRID_WIDTH = 128;
 const GAME_SIZE = GRID_WIDTH*GRID_WIDTH;
 
 let grid = new Uint8Array(GAME_SIZE);
@@ -53,7 +53,7 @@ let survive_function = (cell, x, y) => {
   }
 
   let neighbour_count = neighbours(grid, x, y);
-  let state = cell;
+  let state = 1;
 
 
   if (cell == 1) {
@@ -68,6 +68,8 @@ let survive_function = (cell, x, y) => {
 
     if (neighbour_count == 3) {
       state = 1;
+    } else {
+      state = 0;
     }
 
   }
@@ -125,17 +127,20 @@ main_loop = function() {
   render.render(grid);
 }
 
+function tick() { //main loop
+
+  main_loop();
+  requestAnimationFrame(tick);
+
+}
+
 var ctx;
 
 $(document).ready(function() {
 
   ctx = $("#game-view")[0].getContext('2d');
 
-  for (x=0;x<1000;x++) {
-
-    setTimeout(main_loop, 200*x);
-  
-  }
+  tick();
     
 });
 
