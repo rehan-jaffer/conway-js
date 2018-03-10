@@ -1,4 +1,4 @@
-GRID_WIDTH = 128;
+GRID_WIDTH = 256;
 const GAME_SIZE = GRID_WIDTH*GRID_WIDTH;
 
 let grid = new Uint8Array(GAME_SIZE);
@@ -15,21 +15,8 @@ function loop_over(grid, f) {
   }
 }
 
-/* 
-let print_function = (cell,x,y) => { 
-  if (cell == 1) {
-    process.stdout.write("#") 
-  } else {
-    process.stdout.write(" ") 
-  }
-  if (y == 0 && x > 0) {
-    console.log("");
-  }
-}
-*/
-
 let init_function = (cell,x,y) => {
-  if (Math.round(Math.random()*5)==3) {
+  if (Math.round(Math.random()*5)==2) {
     grid[translate(x,y)] = 1;
   } else {
     grid[translate(x,y)] = 0;
@@ -53,14 +40,14 @@ let survive_function = (cell, x, y) => {
   }
 
   let neighbour_count = neighbours(grid, x, y);
-  let state = 1;
+  let state = cell;
 
 
   if (cell == 1) {
 
     if (neighbour_count > 3 || neighbour_count < 2) {
       state = 0;
-    } else if (neighbour_count == 2 || neighbour_count == 3) {
+    } else {
       state = 1;
     }
 
@@ -68,13 +55,12 @@ let survive_function = (cell, x, y) => {
 
     if (neighbour_count == 3) {
       state = 1;
-    } else {
-      state = 0;
     }
 
   }
 
-  grid[translate(x,y)] = state;
+  updated_grid[translate(x,y)] = state;
+
 }
 
 loop_over(grid, init_function);
@@ -104,9 +90,9 @@ class RectangleRenderer {
     this.foreground = foreground;
   }
   render(grid) {
-    ctx.clearRect(0, 0, GRID_WIDTH*2, GRID_WIDTH*2);
+    ctx.clearRect(0, 0, GRID_WIDTH, GRID_WIDTH);
     ctx.fillStyle = this.background;
-    ctx.fillRect(0, 0, GRID_WIDTH*2, GRID_WIDTH*2);
+    ctx.fillRect(0, 0, GRID_WIDTH, GRID_WIDTH);
     for (var j = 1; j < GRID_WIDTH; j++) {
       for (var k = 1; k < GRID_WIDTH; k++) {
         if (grid[translate(j,k)] === 1) {
@@ -118,13 +104,37 @@ class RectangleRenderer {
   }
 }
 
+class TextRenderer {
+  render(grid) {
+    for (var j = 1; j < GRID_WIDTH; j++) {
+      for (var k = 1; k < GRID_WIDTH; k++) {
+       if (cell == 1) {
+         process.stdout.write("#") 
+       } else {
+         process.stdout.write(" ") 
+       }
+       if (y == 0 && x > 0) {
+         console.log("");
+       }
+  }
+}
+
+
+
+  }
+}
+
 const renderer = RectangleRenderer;
 
 render = new renderer
 
+let updated_grid = [];
+
 main_loop = function() {
+  updated_grid = [];
   loop_over(grid, survive_function);
-  render.render(grid);
+  render.render(updated_grid);
+  grid = updated_grid;
 }
 
 function tick() { //main loop
