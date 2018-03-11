@@ -1,2 +1,8 @@
+body {
+  text-align: center;
+}
+
 #game-view {
+  width: 640px;
+  height: 640px;
 }

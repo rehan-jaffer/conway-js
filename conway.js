@@ -1,83 +1,21 @@
-GRID_WIDTH = 256;
-const GAME_SIZE = GRID_WIDTH*GRID_WIDTH;
+GRID_WIDTH = 64;
+const GRID_SIZE = GRID_WIDTH * GRID_WIDTH;
 
-let grid = new Uint8Array(GAME_SIZE);
-
-function translate(x, y) {
-  return ((x*GRID_WIDTH)+y);
+function translate(x,y) {
+  return (GRID_WIDTH*y)+x;
 }
-
-function loop_over(grid, f) {
-  for(let x=0;x<GRID_WIDTH;x++) {
-    for(let y=0;y<GRID_WIDTH;y++) {
-      f(grid[translate(x,y)], x, y);
-    }
-  }
-}
-
-let init_function = (cell,x,y) => {
-  if (Math.round(Math.random()*5)==2) {
-    grid[translate(x,y)] = 1;
-  } else {
-    grid[translate(x,y)] = 0;
-  }
-}
-
-let survive_function = (cell, x, y) => {
-
-  let neighbours = (grid, x1, y1) => {
-    let score = 0;
-    for (let i=-1;i<2;i++) {
-      for (let j=-1;j<2;j++) {
-        if (i == 0 && j == 0) {
-          // skip self
-        } else {
-          score += grid[translate(parseInt(x1)+i,parseInt(y1)+j) % GAME_SIZE];
-        }
-      }
-    }
-    return score;
-  }
-
-  let neighbour_count = neighbours(grid, x, y);
-  let state = cell;
-
-
-  if (cell == 1) {
-
-    if (neighbour_count > 3 || neighbour_count < 2) {
-      state = 0;
-    } else {
-      state = 1;
-    }
-
-  } else {
-
-    if (neighbour_count == 3) {
-      state = 1;
-    }
-
-  }
-
-  updated_grid[translate(x,y)] = state;
-
-}
-
-loop_over(grid, init_function);
 
 class PixelRenderer {
-  constructor() {
-
-  }
+  constructor() {}
   render(grid) {
     let imagedata = ctx.createImageData(GRID_WIDTH, GRID_WIDTH);
-    for(let x=0;x<GRID_WIDTH;x++) {
-      for(let y=0;y<GRID_WIDTH;y++) {
-        let pixelindex = translate(x,y);
-        imagedata.data[pixelindex*4] = grid[pixelindex]*255;
-        imagedata.data[pixelindex*4+1] = grid[pixelindex]*255;
-        imagedata.data[pixelindex*4+2] = grid[pixelindex]*255;
-        imagedata.data[pixelindex*4+3] = 255;
+    for (let x = 0; x < GRID_WIDTH; x++) {
+      for (let y = 0; y < GRID_WIDTH; y++) {
+        let pixelindex = translate(x, y);
+        imagedata.data[pixelindex * 4] = grid[pixelindex] * 255;
+        imagedata.data[pixelindex * 4 + 1] = grid[pixelindex] * 255;
+        imagedata.data[pixelindex * 4 + 2] = grid[pixelindex] * 255;
+        imagedata.data[pixelindex * 4 + 3] = 255;
       }
     }
     ctx.putImageData(imagedata, 0, 0);
@@ -85,7 +23,7 @@ class PixelRenderer {
 }
 
 class RectangleRenderer {
-  constructor(background="#ffffff",foreground="#ff0000") {
+  constructor(background = "#ffffff", foreground = "#ff0000") {
     this.background = background;
     this.foreground = foreground;
   }
@@ -95,7 +33,7 @@ class RectangleRenderer {
     ctx.fillRect(0, 0, GRID_WIDTH, GRID_WIDTH);
     for (var j = 1; j < GRID_WIDTH; j++) {
       for (var k = 1; k < GRID_WIDTH; k++) {
-        if (grid[translate(j,k)] === 1) {
+        if (grid[translate(j, k)] === 1) {
           ctx.fillStyle = this.foreground;
           ctx.fillRect(j, k, 1, 1);
         }
@@ -108,50 +46,108 @@ class TextRenderer {
   render(grid) {
     for (var j = 1; j < GRID_WIDTH; j++) {
       for (var k = 1; k < GRID_WIDTH; k++) {
-       if (cell == 1) {
-         process.stdout.write("#") 
-       } else {
-         process.stdout.write(" ") 
-       }
-       if (y == 0 && x > 0) {
-         console.log("");
-       }
+        if (cell == 1) {
+          process.stdout.write("#");
+        } else {
+          process.stdout.write(" ");
+        }
+        if (y == 0 && x > 0) {
+          console.log("");
+        }
+      }
+    }
   }
 }
 
+const DENSITY_FACTOR = 5; // defines the initial density of cells, higher = sparser, lower = denser
 
+class Grid {
+  constructor() {
+    this.grid = new Uint8Array(GRID_SIZE);
+    this.next = new Uint8Array(GRID_SIZE);
+  }
+  dump() {
+    return this.next;
+  }
+  swap() {
+    this.grid = this.next;
+    this.next = new Uint8Array(GRID_SIZE);
+  }
+  at(x, y) {
+    return y * GRID_WIDTH + x;
+  }
+  set(x, y, value) {
+    this.next[this.at(x, y)] = value;
+  }
+  init() {
+    for (let x = 0; x < GRID_SIZE; x++) {
+      for (let y = 0; y < GRID_SIZE; y++) {
+        if (Math.round(Math.random() * DENSITY_FACTOR) == 2) {
+          this.grid[this.at(x, y)] = 1;
+        } else {
+          this.grid[this.at(x, y)] = 0;
+        }
+      }
+    }
+  }
 
+  survival(score, state) {
+  }
+  update() {
+    for (let x = 0; x < GRID_WIDTH; x++) {
+      for (let y = 0; y < GRID_WIDTH; y++) {
+        let score = 0;
+        const CURRENT_LOCATION = this.at(x,y);
+        for (let i = -1; i < 2; i++) {
+          for (let j = -1; j < 2; j++) {
+            if (i == 0 && j == 0) {
+              // skip self
+            } else {
+              score += this.grid[this.at(x + i, y + j) % GRID_SIZE];
+            }
+          }
+        }
+
+          switch (this.grid[CURRENT_LOCATION]) {
+            case 0:
+              if (score == 3) {
+                this.next[CURRENT_LOCATION] = 1;
+              } else {
+                this.next[CURRENT_LOCATION] = 0;
+              }
+            break;
+            case 1:
+              if (score > 3 || score < 2) {
+                this.next[CURRENT_LOCATION] = 0;
+               } else {
+                this.next[CURRENT_LOCATION] = 1;
+               }
+            break;
+          }
+      }
+    }
   }
 }
 
 const renderer = RectangleRenderer;
 
-render = new renderer
+render = new renderer();
 
-let updated_grid = [];
+let grid = new Grid;
+grid.init();
 
-main_loop = function() {
-  updated_grid = [];
-  loop_over(grid, survive_function);
-  render.render(updated_grid);
-  grid = updated_grid;
-}
 
-function tick() { //main loop
 
-  main_loop();
-  requestAnimationFrame(tick);
-
+function iterate() {
+  grid.update();
+  render.render(grid.dump());
+  grid.swap();
+  requestAnimationFrame(iterate);
 }
 
 var ctx;
 
 $(document).ready(function() {
-
-  ctx = $("#game-view")[0].getContext('2d');
-
-  tick();
-    
+  ctx = $("#game-view")[0].getContext("2d");
+  iterate();
 });
-
-
