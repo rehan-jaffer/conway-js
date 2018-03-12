@@ -1,4 +1,4 @@
-GRID_WIDTH = 250;
+GRID_WIDTH = 256;
 const GRID_SIZE = GRID_WIDTH * GRID_WIDTH;
 
 function translate(x, y) {
@@ -6,7 +6,7 @@ function translate(x, y) {
 }
 
 function random_byte() {
-  let el = Math.round(Math.random() * 1024);
+  let el = Math.round(Math.random() * Number.MAX_SAFE_INTEGER);
   let bits = [];
 
   while (el > 1) {
