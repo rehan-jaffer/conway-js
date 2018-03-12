@@ -1,8 +1,32 @@
-GRID_WIDTH = 64;
+GRID_WIDTH = 250;
 const GRID_SIZE = GRID_WIDTH * GRID_WIDTH;
 
-function translate(x,y) {
-  return (GRID_WIDTH*y)+x;
+function translate(x, y) {
+  return GRID_WIDTH * y + x;
+}
+
+function random_byte() {
+  let el = Math.round(Math.random() * 1024);
+  let bits = [];
+
+  while (el > 1) {
+    let bit = Math.floor(el % 2);
+    bits.push(bit);
+    el = el / 2;
+  }
+
+  return bits;
+}
+
+function fast_random(size) {
+  let array = [];
+
+  while (array.length < size) {
+    let c = random_byte();
+    array = array.concat(c);
+  }
+
+  return array;
 }
 
 class PixelRenderer {
@@ -27,6 +51,7 @@ class RectangleRenderer {
     this.background = background;
     this.foreground = foreground;
   }
+
   render(grid) {
     ctx.clearRect(0, 0, GRID_WIDTH, GRID_WIDTH);
     ctx.fillStyle = this.background;
@@ -65,7 +90,9 @@ class Grid {
   constructor() {
     this.grid = new Uint8Array(GRID_SIZE);
     this.next = new Uint8Array(GRID_SIZE);
+    this.init();
   }
+
   dump() {
     return this.next;
   }
@@ -74,30 +101,24 @@ class Grid {
     this.next = new Uint8Array(GRID_SIZE);
   }
   at(x, y) {
+    if (x < 0) {
+      x = GRID_WIDTH - x;
+    }
+    if (y < 0) {
+      y = GRID_WIDTH - y;
+    }
     return y * GRID_WIDTH + x;
   }
-  set(x, y, value) {
-    this.next[this.at(x, y)] = value;
-  }
   init() {
-    for (let x = 0; x < GRID_SIZE; x++) {
-      for (let y = 0; y < GRID_SIZE; y++) {
-        if (Math.round(Math.random() * DENSITY_FACTOR) == 2) {
-          this.grid[this.at(x, y)] = 1;
-        } else {
-          this.grid[this.at(x, y)] = 0;
-        }
-      }
-    }
+    let random_map = fast_random(GRID_SIZE);
+    this.grid = random_map.slice(0, GRID_SIZE);
   }
 
-  survival(score, state) {
-  }
   update() {
     for (let x = 0; x < GRID_WIDTH; x++) {
       for (let y = 0; y < GRID_WIDTH; y++) {
         let score = 0;
-        const CURRENT_LOCATION = this.at(x,y);
+        const CURRENT_LOCATION = this.at(x, y);
         for (let i = -1; i < 2; i++) {
           for (let j = -1; j < 2; j++) {
             if (i == 0 && j == 0) {
@@ -108,22 +129,22 @@ class Grid {
           }
         }
 
-          switch (this.grid[CURRENT_LOCATION]) {
-            case 0:
-              if (score == 3) {
-                this.next[CURRENT_LOCATION] = 1;
-              } else {
-                this.next[CURRENT_LOCATION] = 0;
-              }
+        switch (this.grid[CURRENT_LOCATION]) {
+          case 0:
+            if (score == 3) {
+              this.next[CURRENT_LOCATION] = 1;
+            } else {
+              this.next[CURRENT_LOCATION] = 0;
+            }
             break;
-            case 1:
-              if (score > 3 || score < 2) {
-                this.next[CURRENT_LOCATION] = 0;
-               } else {
-                this.next[CURRENT_LOCATION] = 1;
-               }
+          case 1:
+            if (score > 3 || score < 2) {
+              this.next[CURRENT_LOCATION] = 0;
+            } else {
+              this.next[CURRENT_LOCATION] = 1;
+            }
             break;
-          }
+        }
       }
     }
   }
@@ -133,10 +154,7 @@ const renderer = RectangleRenderer;
 
 render = new renderer();
 
-let grid = new Grid;
-grid.init();
-
-
+let grid = new Grid();
 
 function iterate() {
   grid.update();
