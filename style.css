@@ -3,6 +3,8 @@ body {
 }
 
 #game-view {
-  width: 640px;
-  height: 640px;
+  text-align: center;
+  margin: 40px;
+  width: 800px;
+  height: 600px;
 }
