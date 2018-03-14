@@ -6,7 +6,7 @@ function translate(x, y) {
 }
 
 function random_byte() {
-  let el = Math.round(Math.random() * Number.MAX_SAFE_INTEGER);
+  let el = Math.round(Math.random() * (Number.MAX_SAFE_INTEGER/2) + Number.MAX_SAFE_INTEGER/2);
   let bits = [];
 
   while (el > 1) {
@@ -88,8 +88,10 @@ const DENSITY_FACTOR = 5; // defines the initial density of cells, higher = spar
 
 class Grid {
   constructor() {
-    this.grid = new Uint8Array(GRID_SIZE);
-    this.next = new Uint8Array(GRID_SIZE);
+    let grid = new ArrayBuffer(GRID_SIZE);
+    this.grid = new Uint8Array(grid);
+    let next_grid = new ArrayBuffer(GRID_SIZE);
+    this.next = new Uint8Array(next_grid);
     this.init();
   }
 
